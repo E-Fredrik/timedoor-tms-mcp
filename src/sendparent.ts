@@ -198,6 +198,10 @@ export function journalRowsFromAttendance(detail: Record<string, any>): ClassJou
   return students.map((s) => {
     const sess = s?.session ?? {};
     const mj = sess.meeting_journal ?? null;
+    // A student who moved to a new book still has this meeting (and its journal) in the OLD book.
+    // The portal then hides the direct link behind its "Student Book History" dialog; meeting_book
+    // names the book the meeting really belongs to (seen live Nov 19 2026, has_changed: true).
+    const mb = sess.meeting_book ?? null;
     const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : null);
     return {
       attendance_id: Number(d.id),
@@ -205,14 +209,14 @@ export function journalRowsFromAttendance(detail: Record<string, any>): ClassJou
       class: cls,
       student: String(s?.name ?? ""),
       student_code: String(s?.code ?? ""),
-      book: String(sess.book?.name ?? ""),
+      book: String(mb?.name ?? sess.book?.name ?? ""),
       journal_status: String(mj?.status ?? "not_created"),
       journal_id: num(mj?.id),
       can_edit: sess.can_edit === true,
-      // The same ids the portal's own "Send Daily Journal" button links with.
+      // The ids the portal's own journal button links with, but with the meeting's own book.
       student_id: num(s?.student_id),
       learning_session_id: num(sess.id),
-      book_id: num(sess.latest_learning_session_book_id),
+      book_id: num(mb?.learning_session_book_id) ?? num(sess.latest_learning_session_book_id),
       meeting_id: num(sess.latest_learning_session_book_meeting_id),
     };
   });

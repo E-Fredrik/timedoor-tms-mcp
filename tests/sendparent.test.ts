@@ -255,6 +255,22 @@ const liveDetail = {
         student_id: 31914,
         session: { id: 26675, latest_learning_session_book_id: 340351, latest_learning_session_book_meeting_id: 980820, book: { name: "Roblox" }, meeting_journal: { id: 815831, status: "created" }, can_edit: true },
       },
+      {
+        id: 5,
+        code: "STD-5",
+        name: "Moved Book",
+        student_id: 31955,
+        session: {
+          id: 26691,
+          latest_learning_session_book_id: 371314,
+          latest_learning_session_book_meeting_id: 1009339,
+          book: { name: "New Book" },
+          book_count: 4,
+          meeting_book: { id: 103, name: "Old Book", learning_session_book_id: 220173, has_changed: true },
+          meeting_journal: { id: 851806, status: "sent" },
+          can_edit: true,
+        },
+      },
       { id: 3, code: "STD-3", name: "No Journal Yet", student_id: 1, session: { id: 5, meeting_journal: null } },
       { id: 4, name: "Broken Row" },
     ],
@@ -276,9 +292,10 @@ describe("journalRowsFromAttendance", () => {
       meeting_id: 980821,
       can_edit: true,
     });
-    expect(rows[2].journal_status).toBe("not_created");
-    expect(rows[2].book_id).toBeNull();
-    expect(rows[3]).toMatchObject({ student: "Broken Row", journal_status: "not_created", student_id: null, can_edit: false });
+    expect(rows[2]).toMatchObject({ student: "Moved Book", book: "Old Book", book_id: 220173, meeting_id: 1009339 });
+    expect(rows[3].journal_status).toBe("not_created");
+    expect(rows[3].book_id).toBeNull();
+    expect(rows[4]).toMatchObject({ student: "Broken Row", journal_status: "not_created", student_id: null, can_edit: false });
   });
   it("handles an empty or odd body without crashing", () => {
     expect(journalRowsFromAttendance({})).toEqual([]);
@@ -308,7 +325,7 @@ describe("listClassJournals", () => {
     const f = listSession(list, { 325555: { status: 200, body: liveDetail }, 311076: { status: 200, body: { data: { id: 311076, students: [] } } } });
     const r: any = await listClassJournals(f.s, { start: "2026-10-29", end: "2026-11-05", includeAll: false });
     expect(r.ready_to_send.map((x: any) => x.student)).toEqual(["Andi Pratama"]);
-    expect(r.status_counts).toEqual({ sent: 1, created: 1, not_created: 2 });
+    expect(r.status_counts).toEqual({ sent: 2, created: 1, not_created: 2 });
     expect(r.rows).toBeUndefined();
     expect(r.class_sessions_checked).toBe(2);
   });
@@ -316,7 +333,7 @@ describe("listClassJournals", () => {
     const f = listSession(list, { 325555: { status: 200, body: liveDetail } });
     const r: any = await listClassJournals(f.s, { start: "2026-10-29", end: "2026-11-05", includeAll: true, classSearch: "tuesday CLASS" });
     expect(r.class_sessions_checked).toBe(1);
-    expect(r.rows).toHaveLength(4);
+    expect(r.rows).toHaveLength(5);
     expect(r.errors).toEqual([]);
   });
   it("one failing class does not stop the others", async () => {
